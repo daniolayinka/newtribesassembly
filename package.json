@@ -1,0 +1,21 @@
+{
+  "name": "new-tribes-assembly",
+  "version": "1.0.2",
+  "main": "index.js",
+  "scripts": {
+    "build": "npx @tailwindcss/cli -i ./assets/src.css -o ./assets/tailwind.css --minify && npx esbuild ./assets/src.js --bundle --minify --outfile=./assets/interactions.js --loader:.css=css"
+  },
+  "keywords": [],
+  "author": "Daniel Olayinka <teaminventico22@gmail.com>",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
+    "esbuild": "^0.28.2",
+    "tailwindcss": "^4.3.3"
+  },
+  "dependencies": {
+    "alpinejs": "^3.17.4",
+    "aos": "^2.3.4"
+  }
+}

@@ -1,0 +1,9 @@
+# Keep generated deployable CSS/JS and Composer vendor/ in Git.
+# Cloudways pulls this repository directly into the theme directory.
+/node_modules/
+.DS_Store
+**/.DS_Store
+.env
+.env.*
+*.log
+*.zip

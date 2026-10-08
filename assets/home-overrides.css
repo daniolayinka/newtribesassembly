@@ -1,0 +1,106 @@
+.pastor-portrait {
+  margin: 0;
+  aspect-ratio: 16 / 10;
+  height: auto;
+  overflow: hidden;
+  border-left: 3px solid #ba954b;
+  background: #f3efe7;
+}
+
+.pastor-portrait img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 38%;
+}
+
+@media (max-width: 760px) {
+  .pastor-portrait,
+  .pastor-portrait img {
+    height: auto;
+  }
+}
+
+[x-cloak] { display: none !important; }
+
+.hero-slider {
+  position: relative;
+  display: block;
+  min-height: 560px;
+  overflow: hidden;
+  background: #102235;
+}
+
+.hero-slide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+}
+
+.hero-slide::before {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(17, 24, 32, .72), rgba(17, 24, 32, .25));
+}
+
+.hero-slide-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hero-slide-content {
+  position: relative;
+  z-index: 2;
+  padding: 48px 0 88px;
+}
+
+.hero-controls {
+  position: absolute;
+  z-index: 3;
+  right: max(20px, calc((100vw - 1280px) / 2));
+  bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hero-control {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(255, 255, 255, .8);
+  background: rgba(16, 34, 53, .55);
+  color: #fff;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.hero-control:hover,
+.hero-control:focus-visible { background: #173960; }
+
+.hero-dots { display: flex; align-items: center; gap: 8px; }
+.hero-dot { width: 10px; height: 10px; padding: 0; border: 1px solid #fff; border-radius: 50%; background: transparent; cursor: pointer; }
+.hero-dot[aria-current="true"] { background: #fff; }
+
+.hero h1 {
+  max-width: 610px;
+  font-size: clamp(2.35rem, 4.25vw, 3.75rem);
+}
+
+.band-blue .meta {
+  color: #f5d797;
+}
+
+@media (max-width: 760px) {
+  .hero-slider { min-height: 600px; }
+  .hero-slide-content { padding: 42px 0 92px; }
+  .hero-controls { right: 20px; bottom: 18px; }
+}
