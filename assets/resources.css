@@ -1,0 +1,21 @@
+.resources-hero { padding: 72px 0 58px; }
+.resources-hero h1 { max-width: none; }
+.resources-index { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; margin-bottom: 0; background: var(--line); border: 1px solid var(--line); }
+.resource-index-link { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 22px 24px; background: #fff; color: var(--forest); font-weight: 700; }
+.resource-index-link:hover, .resource-index-link:focus-visible { background: var(--forest); color: #fff; }
+.resource-section { scroll-margin-top: 100px; }
+.resource-section-heading { display: flex; align-items: end; justify-content: space-between; gap: 32px; margin-bottom: 30px; }
+.resource-section-heading h2 { margin-bottom: 10px; }
+.resource-section-heading p:last-child { margin: 0; }
+.resource-section-heading .button { flex: none; }
+.resource-section .archive-row { align-items: center; }
+.resource-section .archive-row h3 { margin: 2px 0 0; color: var(--forest); font: 1.5rem/1.2 Georgia, serif; }
+.resource-section .archive-row:hover h3, .resource-section .archive-row:focus-visible h3 { text-decoration: underline; text-underline-offset: 4px; }
+.resource-empty { padding: 24px 8px; }
+@media (max-width: 700px) {
+  .resources-hero { padding: 56px 0 44px; }
+  .resources-index { grid-template-columns: 1fr; }
+  .resource-index-link { padding: 16px 20px; }
+  .resource-section-heading { display: block; }
+  .resource-section-heading .button { margin-top: 22px; }
+}

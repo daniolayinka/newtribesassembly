@@ -10,6 +10,9 @@ add_action('wp_enqueue_scripts', function () {
   wp_enqueue_style('nta-aos', get_theme_file_uri('assets/interactions.css'), [], filemtime(get_theme_file_path('assets/interactions.css')));
   wp_enqueue_style('nta-header-overrides', get_theme_file_uri('assets/header-overrides.css'), [], filemtime(get_theme_file_path('assets/header-overrides.css')));
   wp_enqueue_style('nta-home-overrides', get_theme_file_uri('assets/home-overrides.css'), [], filemtime(get_theme_file_path('assets/home-overrides.css')));
+  if (is_page('resources') || is_page_template('page-templates/resources.php')) {
+    wp_enqueue_style('nta-resources', get_theme_file_uri('assets/resources.css'), [], filemtime(get_theme_file_path('assets/resources.css')));
+  }
   wp_enqueue_script('nta-interactions', get_theme_file_uri('assets/interactions.js'), [], filemtime(get_theme_file_path('assets/interactions.js')), true);
 });
 function nta_register_media_type($type, $plural, $singular, $slug) { register_post_type($type, ['labels'=>['name'=>$plural,'singular_name'=>$singular,'add_new_item'=>"Add $singular",'edit_item'=>"Edit $singular"], 'public'=>true, 'show_in_rest'=>true, 'has_archive'=>$slug, 'rewrite'=>['slug'=>$slug,'with_front'=>false], 'menu_icon'=>'dashicons-media-document', 'supports'=>['title','editor','excerpt','thumbnail','revisions']]); }
