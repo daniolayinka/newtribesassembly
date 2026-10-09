@@ -7,6 +7,8 @@ while (have_posts()) :
         'page-templates/meetings.php' => 'meetings',
         'page-templates/our-foundations.php' => 'our-foundations',
         'page-templates/people-groups.php' => 'people-groups',
+        'page-templates/audio-messages.php' => 'audio',
+        'page-templates/video-messages.php' => 'videos',
         'page-templates/standard.php' => 'standard',
     ];
     $selected_template = get_page_template_slug(get_the_ID());
