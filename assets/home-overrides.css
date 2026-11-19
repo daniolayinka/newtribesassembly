@@ -1,6 +1,6 @@
 .pastor-portrait {
   margin: 0;
-  aspect-ratio: 16 / 10;
+  aspect-ratio: 4 / 5;
   height: auto;
   overflow: hidden;
   border-left: 3px solid #ba954b;
@@ -13,13 +13,6 @@
   height: 100%;
   object-fit: cover;
   object-position: center 38%;
-}
-
-@media (max-width: 760px) {
-  .pastor-portrait,
-  .pastor-portrait img {
-    height: auto;
-  }
 }
 
 [x-cloak] { display: none !important; }

@@ -20,7 +20,7 @@ add_action('wp_enqueue_scripts', function () {
   }
   wp_enqueue_script('nta-interactions', get_theme_file_uri('assets/interactions.js'), [], filemtime(get_theme_file_path('assets/interactions.js')), true);
 });
-function nta_register_media_type($type, $plural, $singular, $slug) { register_post_type($type, ['labels'=>['name'=>$plural,'singular_name'=>$singular,'add_new_item'=>"Add $singular",'edit_item'=>"Edit $singular"], 'public'=>true, 'show_in_rest'=>true, 'has_archive'=>$slug, 'rewrite'=>['slug'=>$slug,'with_front'=>false], 'menu_icon'=>'dashicons-media-document', 'supports'=>['title','editor','excerpt','thumbnail','revisions']]); }
+function nta_register_media_type($type, $plural, $singular, $slug) { register_post_type($type, ['labels'=>['name'=>$plural,'singular_name'=>$singular,'add_new_item'=>"Add $singular",'edit_item'=>"Edit $singular"], 'public'=>true, 'show_in_menu'=>!in_array($type, ['nta_message','nta_video','nta_audio'], true), 'show_in_admin_bar'=>!in_array($type, ['nta_message','nta_video','nta_audio'], true), 'show_in_rest'=>true, 'has_archive'=>$slug, 'rewrite'=>['slug'=>$slug,'with_front'=>false], 'menu_icon'=>'dashicons-media-document', 'supports'=>['title','editor','excerpt','thumbnail','revisions']]); }
 add_action('init', function () { nta_register_media_type('nta_download','Downloads','Download','downloads'); nta_register_media_type('nta_message','Messages','Message','messages'); nta_register_media_type('nta_video','Videos','Video','videos'); nta_register_media_type('nta_audio','Audio','Audio item','audio'); });
 add_action('carbon_fields_register_fields', function () {
   $menu_options=[]; foreach (wp_get_nav_menus() as $menu) { $menu_options[$menu->term_id]=$menu->name; }
@@ -75,10 +75,14 @@ add_action('carbon_fields_register_fields', function () {
       Field::make('text','secondary_label','Second button label'),
       Field::make('text','secondary_url','Second button link')->set_help_text('Leave the button text and link empty to hide this button.'),
     ])->set_header_template('<%- heading %>'),
-    Field::make('image','nta_home_leadership_image','Leadership image')->set_value_type('id')->set_help_text('Upload the landscape image shown beside the Senior Elder’s introduction.'),
+    Field::make('image','nta_home_leadership_image','Leadership image')->set_value_type('id')->set_help_text('Upload the portrait shown beside the Senior Elder’s introduction. It displays in a 4:5 frame.'),
   ]);
   $content = [Field::make('date','nta_date','Message date'),Field::make('text','nta_speaker','Speaker'),Field::make('text','nta_series','Series'),Field::make('complex','nta_scriptures','Scripture references')->add_fields([Field::make('text','reference','Reference')]),Field::make('rich_text','nta_summary','Summary')];
-  Container::make('post_meta','Download details')->where('post_type','=','nta_download')->add_fields(array_merge($content,[Field::make('file','nta_pdf','PDF download')->set_type(['application/pdf']),Field::make('file','nta_audio_file','Audio file')->set_type(['audio']),Field::make('text','nta_spotify_url','Spotify episode URL')->set_attribute('type','url'),Field::make('text','nta_anchor_url','Anchor episode URL')->set_attribute('type','url'),Field::make('textarea','nta_podcast_embed','Podcast embed code'),Field::make('text','nta_video_replay_url','Full replay URL')->set_attribute('type','url'),Field::make('association','nta_related_videos','Related videos')->set_types([['type'=>'post','post_type'=>'nta_video']]),Field::make('checkbox','nta_featured','Featured download'),Field::make('checkbox','nta_homepage','Show on homepage')]));
+  Container::make('post_meta','Download sections')->where('post_type','=','nta_download')
+    ->add_tab('Message details', array_merge([Field::make('html','nta_download_editor_guide')->set_html('<p><strong>Write the message in the Gutenberg editor above.</strong> Use Heading, Paragraph, List, and Quote blocks. Add optional media and a PDF below; empty sections stay hidden.</p>')], array_slice($content, 0, 4)))
+    ->add_tab('Video', [Field::make('textarea','nta_embed_code','Video embed code')->set_help_text('Paste iframe or HTML embed markup. Scripts are removed. Leave empty to use the featured image above the message.')])
+    ->add_tab('Audio', [Field::make('textarea','nta_podcast_embed','Audio embed code')->set_help_text('Paste the Spotify or other podcast iframe embed. Leave empty to hide this section.'),Field::make('file','nta_audio_file','Audio file (optional alternative)')->set_type(['audio']),Field::make('text','nta_spotify_url','Spotify episode URL')->set_attribute('type','url'),Field::make('text','nta_anchor_url','Other audio URL')->set_attribute('type','url')])
+    ->add_tab('PDF download', [Field::make('checkbox','nta_generate_pdf','Offer a PDF of the message content')->set_default_value(true)->set_help_text('Creates a branded PDF from the Gutenberg text. Video and audio players are excluded. An uploaded PDF takes precedence.'),Field::make('file','nta_pdf','Upload an existing PDF (optional)')->set_type(['application/pdf'])]);
   Container::make('post_meta','Message details')->where('post_type','=','nta_message')->add_fields(array_merge($content,[Field::make('rich_text','nta_transcript','Transcript / notes'),Field::make('association','nta_download','Related download')->set_max(1)->set_types([['type'=>'post','post_type'=>'nta_download']]),Field::make('association','nta_audio','Related audio')->set_types([['type'=>'post','post_type'=>'nta_audio']]),Field::make('association','nta_videos','Related videos')->set_types([['type'=>'post','post_type'=>'nta_video']]),Field::make('checkbox','nta_homepage','Show on homepage')]));
   Container::make('post_meta','Video details')->where('post_type','=','nta_video')->add_fields([Field::make('date','nta_video_date','Video date'),Field::make('text','nta_duration','Duration'),Field::make('select','nta_source_type','Source type')->set_options(['upload'=>'Upload','youtube'=>'YouTube','tiktok'=>'TikTok','facebook'=>'Facebook','twitter'=>'X / Twitter','spotify_video'=>'Spotify Video','other_embed'=>'Other embed']),Field::make('file','nta_video_file','Video file')->set_type(['video']),Field::make('text','nta_external_url','External video URL')->set_attribute('type','url'),Field::make('textarea','nta_embed_code','Embed code'),Field::make('association','nta_parent_download','Parent download')->set_max(1)->set_types([['type'=>'post','post_type'=>'nta_download']]),Field::make('association','nta_parent_message','Parent message')->set_max(1)->set_types([['type'=>'post','post_type'=>'nta_message']]),Field::make('text','nta_speaker','Speaker'),Field::make('text','nta_series','Series'),Field::make('checkbox','nta_featured','Featured video'),Field::make('checkbox','nta_homepage','Show on homepage')]);
   Container::make('post_meta','Audio details')->where('post_type','=','nta_audio')->add_fields([Field::make('date','nta_audio_date','Audio date'),Field::make('text','nta_duration','Duration'),Field::make('file','nta_audio_file','Audio file')->set_type(['audio']),Field::make('text','nta_external_url','External audio URL')->set_attribute('type','url'),Field::make('text','nta_spotify_url','Spotify episode URL')->set_attribute('type','url'),Field::make('text','nta_anchor_url','Anchor episode URL')->set_attribute('type','url'),Field::make('textarea','nta_podcast_embed','Podcast embed code'),Field::make('association','nta_parent_download','Parent download')->set_max(1)->set_types([['type'=>'post','post_type'=>'nta_download']]),Field::make('association','nta_parent_message','Parent message')->set_max(1)->set_types([['type'=>'post','post_type'=>'nta_message']]),Field::make('checkbox','nta_featured','Featured audio'),Field::make('checkbox','nta_homepage','Show on homepage')]);
@@ -227,14 +231,58 @@ add_filter('render_block_core/heading', function ($html, $block) {
 }, 10, 2);
 
 add_filter('render_block_core/group', function ($html, $block) {
-  if ((is_page('about-us') || is_page_template('page-templates/about-us.php')) && str_contains($block['attrs']['className'] ?? '', 'about-chapter') && str_contains($html, 'Local life, a global consciousness')) {
-    return str_replace('about-chapter', 'about-chapter about-congress', $html);
-  }
-  if ((!is_page('about-us') && !is_page_template('page-templates/about-us.php')) || !str_contains($block['attrs']['className'] ?? '', 'about-chapter') || !str_contains($html, 'Discovering our identity')) {
+  if ((!is_page('about-us') && !is_page_template('page-templates/about-us.php')) || !str_contains($block['attrs']['className'] ?? '', 'about-chapter')) {
     return $html;
   }
-  $heading = '<h2 class="wp-block-heading"><span class="about-icon dashicons dashicons-shield" aria-hidden="true"></span><span class="identity-label">Discovering our identity</span><span class="identity-name">Gadites Community</span></h2>';
-  $html = preg_replace('/<h2\b[^>]*>.*?<\/h2>/s', $heading, $html, 1);
-  $html = str_replace('about-chapter', 'about-chapter about-identity', $html);
-  return $html;
+  $children = array_values(array_filter($block['innerBlocks'] ?? [], static fn($child) => !empty($child['blockName'])));
+  if (!$children || $children[0]['blockName'] !== 'core/heading') {
+    return $html;
+  }
+  $title = trim(wp_strip_all_tags($children[0]['innerHTML']));
+  $sections = [
+    'A people shaped' => ['book-alt', 'scripture-light.jpg', 'An open Bible in morning light', []],
+    'Discovering our identity' => ['shield', 'rooted-growth.jpg', 'An olive sapling with established roots', []],
+    'Our vision' => ['lightbulb', 'rooted-growth.jpg', 'A young olive tree reaching toward the light', []],
+    'Local life' => ['admin-site-alt3', 'congress-wbn-logo.png', 'CongressWBN', []],
+    'The convictions' => ['yes-alt', 'shared-life.jpg', 'Illustration of hands sharing bread at a table', ['yes-alt' => 'Integrity and accountability', 'heart' => 'Humility and servanthood', 'hammer' => 'Diligence joined to divine initiative']],
+    'A Word' => ['book', 'scripture-light.jpg', 'An open Bible on a wooden table', []],
+    'Growing together' => ['groups', 'shared-life.jpg', 'Illustration of fellowship through sharing bread', []],
+  ];
+  $visual = null;
+  foreach ($sections as $prefix => $settings) {
+    if (str_starts_with($title, $prefix)) {
+      $visual = $settings;
+      break;
+    }
+  }
+  if (!$visual) {
+    return $html;
+  }
+  [$icon, $image, $alt, $points] = $visual;
+  $classes = 'about-chapter about-story';
+  if (str_starts_with($title, 'Our vision')) $classes .= ' story-vision';
+  if (str_starts_with($title, 'Local life')) $classes .= ' story-congress';
+  $identity = str_starts_with($title, 'Discovering our identity');
+  $intro = isset($children[1]) ? render_block($children[1]) : '';
+  $body = implode('', array_map('render_block', array_slice($children, 2)));
+  ob_start();
+  ?>
+  <section class="<?php echo esc_attr($classes); ?>">
+    <header class="story-header">
+      <span class="story-icon dashicons dashicons-<?php echo esc_attr($icon); ?>" aria-hidden="true"></span>
+      <h2><?php if ($identity) : ?><span class="story-kicker">Discovering our identity</span>Gadites Community<?php else : ?><?php echo esc_html($title); ?><?php endif; ?></h2>
+      <div class="story-introduction"><?php echo $intro; ?></div>
+    </header>
+    <div class="story-content">
+      <figure class="story-image<?php echo $image === 'congress-wbn-logo.png' ? ' story-logo' : ''; ?>"><img src="<?php echo esc_url(get_theme_file_uri('assets/images/' . $image)); ?>" alt="<?php echo esc_attr($alt); ?>" loading="lazy" width="<?php echo $image === 'congress-wbn-logo.png' ? '400' : '1536'; ?>" height="<?php echo $image === 'congress-wbn-logo.png' ? '115' : '1024'; ?>"></figure>
+      <div class="story-details">
+        <?php echo $body; ?>
+        <?php if ($points) : ?><ul class="story-points"><?php foreach ($points as $point_icon => $point) : ?><li><span class="dashicons dashicons-<?php echo esc_attr($point_icon); ?>" aria-hidden="true"></span><span><?php echo esc_html($point); ?></span></li><?php endforeach; ?></ul><?php endif; ?>
+      </div>
+    </div>
+  </section>
+  <?php
+  return ob_get_clean();
 }, 10, 2);
+
+require_once get_theme_file_path('inc/downloads.php');
