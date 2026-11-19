@@ -46,14 +46,18 @@ $leadership_image = $leadership_image ?: (int) nta_theme_option('nta_pastor_imag
     <div>
       <p class="eyebrow">Welcome to NTA</p>
       <h2>Raising believers who become light in their world.</h2>
-      <p>We are a kingdom community committed to the present purpose of God. We believe believers are not merely gathered, but formed, adjusted, and raised into lives that can carry divine intention with clarity and maturity.</p>
+      <p>We are a kingdom community learning to respond to the present purpose of God. Through the Word, prayer, and shared life, we grow in faith and maturity, becoming people who bring His light into our world.</p>
       <a class="button" href="/about-us/">More About Us</a>
     </div>
     <aside class="meeting-card">
       <p class="eyebrow">Gather With Us</p>
       <h3>Weekly Meetings</h3>
-      <div class="meeting"><strong>Sunday Worship <small>9:00 AM</small></strong>Gathered worship, the word, and life together.</div>
-      <div class="meeting"><strong>Friday Prayer Meeting <small>Online · 8:00 PM</small></strong>Online prayer and shared spiritual labour.</div>
+      <?php foreach (nta_meetings() as $meeting) : ?>
+        <div class="meeting"><strong><?php echo esc_html($meeting['title']); ?></strong>
+          <?php foreach (($meeting['sessions'] ?? []) as $session) : ?><p><?php echo esc_html($session['name']); ?> · <?php echo esc_html($session['time']); ?></p><?php endforeach; ?>
+        </div>
+      <?php endforeach; ?>
+      <a class="text-link" href="<?php echo esc_url(home_url('/meetings/#sunday-worship')); ?>">View meeting details</a>
     </aside>
   </div>
 </section>
@@ -94,7 +98,7 @@ $leadership_image = $leadership_image ?: (int) nta_theme_option('nta_pastor_imag
       <div class="archive-list">
         <?php while ($q->have_posts()) : $q->the_post(); ?>
           <a class="archive-row" href="<?php the_permalink(); ?>">
-            <div><span class="meta"><?php echo get_the_date(); ?></span><h2><?php the_title(); ?></h2></div>
+            <div><span class="meta"><?php echo nta_resource_date(); ?></span><h2><?php the_title(); ?></h2></div>
             <span>→</span>
           </a>
         <?php endwhile; wp_reset_postdata(); ?>

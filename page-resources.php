@@ -7,9 +7,10 @@ get_header();
 while (have_posts()) :
     the_post();
     $resource_sections = [
-        ['type' => 'nta_audio', 'title' => 'Audio Messages', 'intro' => 'Listen to published messages and recordings.', 'action' => 'View all audio messages'],
-        ['type' => 'nta_video', 'title' => 'Video Messages', 'intro' => 'Watch published message videos.', 'action' => 'View all video messages'],
-        ['type' => 'nta_download', 'title' => 'Downloads', 'intro' => 'Browse teaching documents and other downloadable materials.', 'action' => 'View all downloads'],
+        ['type' => 'nta_message', 'title' => 'Message Notes', 'intro' => 'Read notes and transcripts from our gatherings.', 'action' => 'View all messages'],
+        ['type' => 'nta_audio', 'title' => 'Audio Messages', 'intro' => 'Listen again and make time for reflection.', 'action' => 'View all audio messages'],
+        ['type' => 'nta_video', 'title' => 'Video Messages', 'intro' => 'Watch teaching from our gatherings.', 'action' => 'View all video messages'],
+        ['type' => 'nta_download', 'title' => 'Downloads', 'intro' => 'Read and download teaching documents for further study.', 'action' => 'View all downloads'],
     ];
     ?>
     <section class="page-hero resources-hero">
@@ -53,7 +54,7 @@ while (have_posts()) :
                             $resource_query->the_post(); ?>
                             <a class="archive-row" href="<?php the_permalink(); ?>">
                                 <div>
-                                    <span class="meta"><?php echo esc_html(get_the_date()); ?></span>
+                                    <span class="meta"><?php echo esc_html(nta_resource_date()); ?></span>
                                     <h3><?php the_title(); ?></h3>
                                 </div>
                                 <span aria-hidden="true">→</span>

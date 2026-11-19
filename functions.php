@@ -13,6 +13,11 @@ add_action('wp_enqueue_scripts', function () {
   if (is_page('resources') || is_page_template('page-templates/resources.php')) {
     wp_enqueue_style('nta-resources', get_theme_file_uri('assets/resources.css'), [], filemtime(get_theme_file_path('assets/resources.css')));
   }
+  wp_enqueue_style('nta-experience', get_theme_file_uri('assets/experience.css'), [], filemtime(get_theme_file_path('assets/experience.css')));
+  if (is_page('about-us') || is_page_template('page-templates/about-us.php')) {
+    wp_enqueue_style('dashicons');
+    wp_enqueue_script('nta-about-motion', get_theme_file_uri('assets/about-motion.js'), [], filemtime(get_theme_file_path('assets/about-motion.js')), true);
+  }
   wp_enqueue_script('nta-interactions', get_theme_file_uri('assets/interactions.js'), [], filemtime(get_theme_file_path('assets/interactions.js')), true);
 });
 function nta_register_media_type($type, $plural, $singular, $slug) { register_post_type($type, ['labels'=>['name'=>$plural,'singular_name'=>$singular,'add_new_item'=>"Add $singular",'edit_item'=>"Edit $singular"], 'public'=>true, 'show_in_rest'=>true, 'has_archive'=>$slug, 'rewrite'=>['slug'=>$slug,'with_front'=>false], 'menu_icon'=>'dashicons-media-document', 'supports'=>['title','editor','excerpt','thumbnail','revisions']]); }
@@ -25,6 +30,29 @@ add_action('carbon_fields_register_fields', function () {
     Field::make('text','nta_header_cta_label','Header button label')->set_default_value('Join Us'),
     Field::make('text','nta_header_cta_url','Header button URL')->set_attribute('type','url')->set_default_value('/meetings/#sunday-worship'),
   ]);
+  Container::make('theme_options', 'Meeting Settings')->add_fields([
+    Field::make('textarea', 'nta_youtube_live_embed', 'YouTube live embed code')->set_help_text('Paste the iframe code from YouTube Share → Embed. The player appears first on Meetings. YouTube shows its waiting screen before a scheduled stream and its replay after the stream ends. Clear this field to show the next-gathering message.'),
+    Field::make('checkbox', 'nta_live_paused', 'Show the next-gathering message instead of the player')->set_help_text('Use this between services while keeping the embed code saved.'),
+    Field::make('complex', 'nta_meetings', 'Meeting listings')
+      ->setup_labels(['singular_name' => 'Meeting', 'plural_name' => 'Meetings'])
+      ->set_help_text('Add a meeting, then add its sessions and times. Drag entries to change the display order.')
+      ->set_default_value(nta_default_meetings())
+      ->add_fields([
+        Field::make('text', 'title', 'Meeting name')->set_required(true),
+        Field::make('text', 'day', 'Day or schedule')->set_help_text('For example, Every Sunday or First Saturday of each month.'),
+        Field::make('textarea', 'description', 'Introduction'),
+        Field::make('text', 'location', 'Venue or online location'),
+        Field::make('complex', 'sessions', 'Sessions')
+          ->setup_labels(['singular_name' => 'Session', 'plural_name' => 'Sessions'])
+          ->add_fields([
+          Field::make('text', 'name', 'Session name')->set_required(true),
+          Field::make('text', 'time', 'Time')->set_required(true)->set_help_text('Include AM or PM, and a timezone if needed.'),
+        ])->set_header_template('<%- name %> · <%- time %>'),
+        Field::make('text', 'url', 'Meeting link')->set_attribute('type', 'url')->set_help_text('The joining URL for this meeting, such as its YouTube, Zoom, or other online meeting link.'),
+        Field::make('text', 'button_label', 'Joining button text')->set_default_value('Join this meeting'),
+      ])->set_header_template('<%- title %>'),
+    Field::make('text', 'nta_contact_email', 'Visitor and people group contact email')->set_attribute('type', 'email'),
+  ]);
   Container::make('theme_options','Leadership Settings')->set_page_menu_title('Leadership Settings')->add_fields([
     Field::make('image','nta_pastor_image','Pastor image')->set_value_type('id'),
   ]);
@@ -34,16 +62,19 @@ add_action('carbon_fields_register_fields', function () {
     $homepage_fields->or_where('post_id','=',$front_page_id);
   }
   $homepage_fields->add_fields([
-    Field::make('complex','nta_home_slides','Hero slides')->set_help_text('Click Add Entry for each new image and message. Drag slides to change their order.')->add_fields([
+    Field::make('complex','nta_home_slides','Homepage slider')
+      ->setup_labels(['singular_name' => 'Slide', 'plural_name' => 'Slides'])
+      ->set_help_text('Click Add Slide to create a slide. Edit its image, text, and buttons below. Use the trash icon to remove a slide, or drag its header to change the order.')
+      ->add_fields([
       Field::make('image','image','Slide image')->set_value_type('id')->set_required(true),
-      Field::make('text','eyebrow','Small heading'),
+      Field::make('text','eyebrow','Introductory label'),
       Field::make('text','heading','Main heading')->set_required(true),
-      Field::make('textarea','body','Description'),
+      Field::make('textarea','body','Supporting text'),
       Field::make('text','primary_label','First button label'),
-      Field::make('text','primary_url','First button URL'),
+      Field::make('text','primary_url','First button link')->set_help_text('Use a page path such as /about-us/ or a full https:// URL.'),
       Field::make('text','secondary_label','Second button label'),
-      Field::make('text','secondary_url','Second button URL'),
-    ]),
+      Field::make('text','secondary_url','Second button link')->set_help_text('Leave the button text and link empty to hide this button.'),
+    ])->set_header_template('<%- heading %>'),
     Field::make('image','nta_home_leadership_image','Leadership image')->set_value_type('id')->set_help_text('Upload the landscape image shown beside the Senior Elder’s introduction.'),
   ]);
   $content = [Field::make('date','nta_date','Message date'),Field::make('text','nta_speaker','Speaker'),Field::make('text','nta_series','Series'),Field::make('complex','nta_scriptures','Scripture references')->add_fields([Field::make('text','reference','Reference')]),Field::make('rich_text','nta_summary','Summary')];
@@ -62,5 +93,148 @@ add_filter('wp_nav_menu_items', function ($items, $args) {
   $url = nta_theme_option('nta_header_cta_url', '/meetings/#sunday-worship');
   return $items . '<li class="mobile-nav-cta"><a href="' . esc_url($url) . '">' . esc_html($label) . '</a></li>';
 }, 10, 2);
-function nta_page_intro($slug){$copy=['about-us'=>'A kingdom community not manufactured, but forged through process, endurance, and the discovery of divine naming within the present purpose of God.','our-foundations'=>'A community defined by the rigorous, enduring process of spiritual formation informed by the Present Truth Purpose of God.','meetings'=>'Gathered worship, the word, prayer, and life together.','people-groups'=>'People growing in shared responsibility, prayer, maturity, and meaningful participation in church life.','audio'=>'Listen to published audio messages and recordings.','videos'=>'Watch published video messages from New Tribes Assembly.'];return $copy[$slug]??'';}
+function nta_page_intro($slug){$copy=['about-us'=>'A kingdom community growing in truth, shared life, and the present purpose of God.','our-foundations'=>'The convictions that shape our worship, our relationships, and the way we serve.','meetings'=>'Gathered worship, the word, prayer, and life together.','people-groups'=>'People growing in shared responsibility, prayer, maturity, and meaningful participation in church life.','audio'=>'Listen to published audio messages and recordings.','videos'=>'Watch published video messages from New Tribes Assembly.'];return $copy[$slug]??'';}
 function nta_meta($key,$id=0){ $id=$id ?: get_the_ID(); $value=function_exists('carbon_get_post_meta') ? carbon_get_post_meta($id,$key) : ''; return $value !== '' && $value !== null ? $value : get_post_meta($id,$key,true); }
+
+function nta_resource_date() {
+  $keys = ['nta_audio' => 'nta_audio_date', 'nta_video' => 'nta_video_date'];
+  $date = nta_meta($keys[get_post_type()] ?? 'nta_date');
+  $parsed = $date ? date_create_immutable($date, wp_timezone()) : false;
+  return $parsed ? wp_date(get_option('date_format'), $parsed->getTimestamp()) : get_the_date();
+}
+
+function nta_embed_allowed_html() {
+  $allowed = wp_kses_allowed_html('post');
+  $allowed['iframe'] = array_fill_keys(['src', 'title', 'width', 'height', 'allow', 'allowfullscreen', 'loading', 'referrerpolicy', 'frameborder'], true);
+  return $allowed;
+}
+
+add_filter('wp_nav_menu_objects', function ($items, $args) {
+  if (($args->menu_id ?? '') !== 'primary-navigation') {
+    return $items;
+  }
+  foreach ($items as $parent) {
+    if (untrailingslashit(wp_parse_url($parent->url, PHP_URL_PATH) ?: '') !== '/resources') {
+      continue;
+    }
+    foreach (['nta_audio' => 'Audio Messages', 'nta_video' => 'Video Messages', 'nta_message' => 'Message Notes', 'nta_download' => 'Downloads'] as $type => $label) {
+      $url = get_post_type_archive_link($type);
+      $exists = false;
+      foreach ($items as $child) {
+        if ((int) $child->menu_item_parent === (int) $parent->ID && untrailingslashit(wp_parse_url($child->url, PHP_URL_PATH) ?: '') === untrailingslashit(wp_parse_url($url, PHP_URL_PATH) ?: '')) {
+          $exists = true;
+          break;
+        }
+      }
+      if ($exists) {
+        continue;
+      }
+      $child = clone $parent;
+      $child->ID = -100 - count($items);
+      $child->db_id = $child->ID;
+      $child->menu_item_parent = $parent->ID;
+      $child->title = $label;
+      $child->url = $url;
+      $child->classes = [];
+      $child->current = false;
+      $child->current_item_parent = false;
+      $child->current_item_ancestor = false;
+      $items[] = $child;
+    }
+    break;
+  }
+  return $items;
+}, 10, 2);
+
+function nta_youtube_live_url($embed) {
+  if (!preg_match('/<iframe\b[^>]*\bsrc\s*=\s*([\'"])(.*?)\1/is', $embed, $matches)) {
+    return '';
+  }
+  $url = html_entity_decode($matches[2], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+  $parts = wp_parse_url($url);
+  if (!$parts || ($parts['scheme'] ?? '') !== 'https' || !in_array(strtolower($parts['host'] ?? ''), ['www.youtube.com', 'youtube.com', 'www.youtube-nocookie.com', 'youtube-nocookie.com'], true)) {
+    return '';
+  }
+  $path = $parts['path'] ?? '';
+  if (!preg_match('~^/embed/(?:[A-Za-z0-9_-]{11}|live_stream)$~', $path)) {
+    return '';
+  }
+  return add_query_arg(['controls' => '1', 'fs' => '1', 'playsinline' => '1', 'autoplay' => '0'], $url);
+}
+
+function nta_default_meetings() {
+  return [
+    [
+      'title' => 'Sunday Service',
+      'day' => 'Every Sunday',
+      'description' => 'Gather with us for worship and teaching as we grow in the Word and in our life together.',
+      'location' => '',
+      'sessions' => [
+        ['name' => 'Gadites Worship Service', 'time' => '9:00 AM'],
+        ['name' => 'Quarry Session', 'time' => '10:00 AM'],
+      ],
+      'url' => '',
+      'button_label' => 'Join Sunday service',
+    ],
+    [
+      'title' => 'Friday Prayer Meeting',
+      'day' => 'Every Friday',
+      'description' => 'Join us in prayer as we seek God together and share responsibility for the life of the community.',
+      'location' => 'Online',
+      'sessions' => [['name' => 'Online prayer', 'time' => '8:00 PM']],
+      'url' => '',
+      'button_label' => 'Join Friday prayer',
+    ],
+  ];
+}
+
+function nta_meetings() {
+  $meetings = nta_theme_option('nta_meetings', []);
+  if (is_array($meetings) && $meetings) {
+    return $meetings;
+  }
+  $meetings = nta_default_meetings();
+  $meetings[0]['url'] = nta_theme_option('nta_sunday_url');
+  $meetings[0]['location'] = nta_theme_option('nta_meeting_address');
+  $meetings[1]['url'] = nta_theme_option('nta_friday_url');
+  return $meetings;
+}
+
+add_filter('render_block_core/heading', function ($html, $block) {
+  if (!is_page('about-us') && !is_page_template('page-templates/about-us.php')) {
+    return $html;
+  }
+  $icons = [
+    'A people shaped' => 'book-alt',
+    'Discovering our identity' => 'shield',
+    'Our vision' => 'lightbulb',
+    'Local life' => 'admin-site-alt3',
+    'The convictions' => 'compass',
+    'A Word' => 'book',
+    'Growing together' => 'groups',
+  ];
+  $title = wp_strip_all_tags($html);
+  if (str_starts_with(trim($title), 'Local life')) {
+    $logo = '<img class="congress-wbn-logo" src="' . esc_url(get_theme_file_uri('assets/images/congress-wbn-logo.png')) . '" alt="CongressWBN" width="400" height="115" loading="lazy">';
+    $html = str_replace('</h2>', $logo . '</h2>', $html);
+  }
+  foreach ($icons as $prefix => $icon) {
+    if (str_starts_with(trim($title), $prefix)) {
+      return preg_replace('/(<h2\b[^>]*>)/', '$1<span class="about-icon dashicons dashicons-' . esc_attr($icon) . '" aria-hidden="true"></span>', $html, 1);
+    }
+  }
+  return $html;
+}, 10, 2);
+
+add_filter('render_block_core/group', function ($html, $block) {
+  if ((is_page('about-us') || is_page_template('page-templates/about-us.php')) && str_contains($block['attrs']['className'] ?? '', 'about-chapter') && str_contains($html, 'Local life, a global consciousness')) {
+    return str_replace('about-chapter', 'about-chapter about-congress', $html);
+  }
+  if ((!is_page('about-us') && !is_page_template('page-templates/about-us.php')) || !str_contains($block['attrs']['className'] ?? '', 'about-chapter') || !str_contains($html, 'Discovering our identity')) {
+    return $html;
+  }
+  $heading = '<h2 class="wp-block-heading"><span class="about-icon dashicons dashicons-shield" aria-hidden="true"></span><span class="identity-label">Discovering our identity</span><span class="identity-name">Gadites Community</span></h2>';
+  $html = preg_replace('/<h2\b[^>]*>.*?<\/h2>/s', $heading, $html, 1);
+  $html = str_replace('about-chapter', 'about-chapter about-identity', $html);
+  return $html;
+}, 10, 2);

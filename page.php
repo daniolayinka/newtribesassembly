@@ -20,11 +20,35 @@ while (have_posts()) :
         'audio' => 'nta_audio',
     ];
     ?>
-    <section class="page-hero">
+    <?php if ($slug === 'meetings') :
+        $live_url = nta_theme_option('nta_live_paused') ? '' : nta_youtube_live_url(nta_theme_option('nta_youtube_live_embed'));
+        ?>
+        <section class="meeting-broadcast" aria-label="Online gathering">
+            <?php if ($live_url) : ?>
+                <div class="meeting-player">
+                    <iframe src="<?php echo esc_url($live_url); ?>" title="New Tribes Assembly YouTube broadcast" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+                </div>
+                <div class="broadcast-caption wrap"><p>Worship with New Tribes Assembly</p><a href="#sunday-worship">Meeting details</a></div>
+            <?php else : ?>
+                <div class="broadcast-waiting wrap">
+                    <p class="eyebrow">Worship with us</p>
+                    <h1>Join our next gathering.</h1>
+                    <p>Come together for worship, the Word, and prayer.</p>
+                    <ul class="broadcast-schedule"><?php foreach (nta_meetings() as $meeting) : ?><li><?php echo esc_html($meeting['title']); ?><?php if (!empty($meeting['day'])) : ?> · <?php echo esc_html($meeting['day']); ?><?php endif; ?></li><?php endforeach; ?></ul>
+                    <div class="actions"><a class="button" href="#sunday-worship">View meeting details</a><a class="button outline" href="<?php echo esc_url(home_url('/resources/')); ?>">Explore past teaching</a></div>
+                </div>
+            <?php endif; ?>
+        </section>
+    <?php endif; ?>
+    <section class="page-hero<?php echo $slug === 'about-us' ? ' about-hero' : ''; ?>">
         <div class="wrap">
+            <?php if ($slug === 'about-us') : ?><div class="about-hero-copy"><?php endif; ?>
             <p class="eyebrow"><?php echo esc_html($slug === 'meetings' ? 'Gathered Life' : ($slug === 'people-groups' ? 'Life Together' : 'New Tribes Assembly')); ?></p>
-            <h1><?php the_title(); ?></h1>
+            <?php if ($slug === 'meetings' && !$live_url) : ?><h2><?php the_title(); ?></h2><?php else : ?><h1><?php the_title(); ?></h1><?php endif; ?>
             <p class="lead"><?php echo esc_html(nta_page_intro($slug)); ?></p>
+            <?php if ($slug === 'about-us') : ?></div>
+                <figure class="about-hero-image"><?php if (has_post_thumbnail()) : ?><?php the_post_thumbnail('large', ['loading' => 'eager']); ?><?php else : ?><img src="<?php echo esc_url(get_theme_file_uri('assets/images/scripture-light.jpg')); ?>" alt="An open Bible in warm morning light" width="1536" height="1024" fetchpriority="high"><?php endif; ?></figure>
+            <?php endif; ?>
         </div>
     </section>
     <?php if (isset($archives[$slug])) :
@@ -36,7 +60,7 @@ while (have_posts()) :
                     while ($archive_query->have_posts()) :
                         $archive_query->the_post(); ?>
                         <a class="archive-row" href="<?php the_permalink(); ?>">
-                            <div><span class="meta"><?php echo esc_html(get_the_date()); ?></span><h2><?php the_title(); ?></h2><p><?php echo esc_html(get_the_excerpt()); ?></p></div><span>→</span>
+                            <div><span class="meta"><?php echo esc_html(nta_resource_date()); ?></span><h2><?php the_title(); ?></h2><p><?php echo esc_html(get_the_excerpt()); ?></p></div><span>→</span>
                         </a>
                     <?php endwhile;
                     wp_reset_postdata();
@@ -46,24 +70,49 @@ while (have_posts()) :
             </div>
         </div></section>
     <?php elseif ($slug === 'meetings') : ?>
-        <section id="sunday-worship" class="section band-sand"><div class="wrap split">
-            <div><p class="eyebrow">Sunday Worship</p><h2>Gathered worship and the Word</h2><p>Join us for worship, the Word, and life together every Sunday at 9:00 AM.</p><a class="button" href="#">Join Worship Service</a></div>
-            <div class="meeting-card"><p class="eyebrow">Friday Prayer Meeting</p><h2>Online · 8:00 PM</h2><p>Come ready for shared spiritual labour, not passive attendance.</p></div>
-        </div></section>
+        <section id="sunday-worship" class="meeting-listings" aria-label="Meeting schedule">
+            <div class="wrap">
+                <?php foreach (nta_meetings() as $meeting) : ?>
+                    <article class="meeting-listing">
+                        <div class="meeting-introduction">
+                            <?php if (!empty($meeting['day'])) : ?><p class="eyebrow"><?php echo esc_html($meeting['day']); ?></p><?php endif; ?>
+                            <h2><?php echo esc_html($meeting['title']); ?></h2>
+                            <?php if (!empty($meeting['description'])) : ?><p><?php echo nl2br(esc_html($meeting['description'])); ?></p><?php endif; ?>
+                            <?php if (!empty($meeting['location'])) : ?><p class="meeting-location"><?php echo nl2br(esc_html($meeting['location'])); ?></p><?php endif; ?>
+                            <?php if (!empty($meeting['url'])) : ?><a class="button" href="<?php echo esc_url($meeting['url']); ?>"><?php echo esc_html($meeting['button_label'] ?: 'Join this meeting'); ?></a><?php endif; ?>
+                        </div>
+                        <?php if (!empty($meeting['sessions'])) : ?>
+                            <dl class="meeting-sessions">
+                                <?php foreach ($meeting['sessions'] as $session) : ?>
+                                    <div><dt><?php echo esc_html($session['name']); ?></dt><dd><?php echo esc_html($session['time']); ?></dd></div>
+                                <?php endforeach; ?>
+                            </dl>
+                        <?php endif; ?>
+                    </article>
+                <?php endforeach; ?>
+            </div>
+        </section>
     <?php elseif ($slug === 'people-groups') : ?>
         <section class="section band-sand"><div class="wrap split">
             <div><p class="eyebrow">Men's People Group</p><h2>Hebronite</h2><p>Hebronites are men being strengthened to stand like a wall: committed to prayer, maturity, responsibility, and significant participation in the life of the church.</p></div>
-            <div><p class="eyebrow">Women's People Groups</p><h2>Excel &amp; Charis</h2><p>Women gathering in formation, mutual support, and the discovery of their identity within God's purpose.</p></div>
-        </div></section>
+            <div><p class="eyebrow">Women's People Groups</p><h2>Excel &amp; Charis</h2><p>Excel and Charis bring women together to grow in faith, support one another, and participate in the shared life of the church.</p></div>
+        </div><div class="wrap"><p>Speak with us at a Sunday gathering to learn more about a people group.<?php if (is_email(nta_theme_option('nta_contact_email'))) : ?> <a class="text-link" href="<?php echo esc_url('mailto:' . nta_theme_option('nta_contact_email')); ?>">Ask about joining a group</a><?php endif; ?></p></div></section>
     <?php elseif ($slug === 'our-foundations') : ?>
         <section class="section band-sand"><div class="wrap"><h2>Foundational Positions</h2><div class="cards">
-            <?php foreach (['Pursuing the Purpose of the Lord', 'Progressive Christianity', 'Building Rather Than Blessing', 'Community Life', 'Spirit of Servanthood', 'Hard Work Joined to Divine Initiative'] as $foundation) : ?>
-                <article class="card"><h3><?php echo esc_html($foundation); ?></h3><p>We pursue growth in truth, obedience, structure, and a shared life that carries God’s intention.</p></article>
+            <?php foreach ([
+                'Pursuing the Purpose of the Lord' => 'We seek to understand what God is saying and respond with faith, obedience, and a life shaped by His Word.',
+                'Progressive Christianity' => 'We keep growing in our understanding of truth, allowing the Word to mature us and shape how we live.',
+                'Building Rather Than Blessing' => 'We value lasting spiritual formation, developing lives that can carry responsibility and serve God’s purpose.',
+                'Community Life' => 'We share life, prayer, and responsibility, learning to grow together through practical care and mutual support.',
+                'Spirit of Servanthood' => 'We serve with humility and accountability, placing our gifts and strength at the service of others.',
+                'Hard Work Joined to Divine Initiative' => 'We respond to God’s leading with diligence, perseverance, and faithful participation in the work before us.',
+            ] as $foundation => $description) : ?>
+                <article class="card"><h3><?php echo esc_html($foundation); ?></h3><p><?php echo esc_html($description); ?></p></article>
             <?php endforeach; ?>
         </div></div></section>
     <?php endif; ?>
-    <?php if (!isset($archives[$slug])) : ?>
-        <section class="section"><article class="wrap prose"><?php the_content(); ?></article></section>
+    <?php if (!isset($archives[$slug]) && $slug !== 'meetings') : ?>
+        <section class="section<?php echo $slug === 'about-us' ? ' about-page-content' : ''; ?>"><article class="wrap prose"><?php the_content(); ?></article></section>
     <?php endif;
 endwhile;
 get_footer();
