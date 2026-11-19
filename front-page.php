@@ -11,10 +11,10 @@ $leadership_image = $leadership_image ?: (int) nta_theme_option('nta_pastor_imag
 
 <?php if ($slides) : ?>
 <section class="hero hero-slider" x-data="ntaHeroSlider(<?php echo count($slides); ?>)" data-aos="fade" aria-label="Homepage highlights" aria-roledescription="carousel" @mouseenter="pause()" @mouseleave="resume()" @focusin="pause()" @focusout="resume()">
-  <?php foreach ($slides as $index => $slide) : ?>
-    <div class="hero-slide" role="group" aria-roledescription="slide" aria-label="<?php echo esc_attr(($index + 1) . ' of ' . count($slides)); ?>" x-show="current === <?php echo (int) $index; ?>" x-transition.opacity.duration.500ms<?php echo $index ? ' x-cloak' : ''; ?>>
-      <?php echo wp_get_attachment_image((int) $slide['image'], 'full', false, ['class' => 'hero-slide-image', 'alt' => '', 'loading' => $index ? 'lazy' : 'eager']); ?>
-      <div class="wrap hero-slide-content">
+  <?php foreach ($slides as $index => $slide) : $has_content = nta_slide_has_content($slide); ?>
+    <div class="hero-slide<?php echo $has_content ? '' : ' hero-slide-image-only'; ?>" role="group" aria-roledescription="slide" aria-label="<?php echo esc_attr(($index + 1) . ' of ' . count($slides)); ?>" x-show="current === <?php echo (int) $index; ?>" x-transition.opacity.duration.500ms<?php echo $index ? ' x-cloak' : ''; ?>>
+      <?php echo wp_get_attachment_image((int) $slide['image'], 'full', false, ['class' => 'hero-slide-image', 'alt' => $has_content ? '' : get_post_meta((int) $slide['image'], '_wp_attachment_image_alt', true), 'loading' => $index ? 'lazy' : 'eager']); ?>
+      <?php if ($has_content) : ?><div class="wrap hero-slide-content">
         <?php if (!empty($slide['eyebrow'])) : ?><p class="eyebrow"><?php echo esc_html($slide['eyebrow']); ?></p><?php endif; ?>
         <?php if (!empty($slide['heading'])) : ?><h1><?php echo esc_html($slide['heading']); ?></h1><?php endif; ?>
         <?php if (!empty($slide['body'])) : ?><p class="lead"><?php echo nl2br(esc_html($slide['body'])); ?></p><?php endif; ?>
@@ -24,7 +24,7 @@ $leadership_image = $leadership_image ?: (int) nta_theme_option('nta_pastor_imag
             <?php if (!empty($slide['secondary_label']) && !empty($slide['secondary_url'])) : ?><a class="button outline" href="<?php echo esc_url($slide['secondary_url']); ?>"><?php echo esc_html($slide['secondary_label']); ?></a><?php endif; ?>
           </div>
         <?php endif; ?>
-      </div>
+      </div><?php endif; ?>
     </div>
   <?php endforeach; ?>
   <?php if (count($slides) > 1) : ?>

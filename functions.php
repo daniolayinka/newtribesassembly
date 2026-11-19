@@ -64,11 +64,11 @@ add_action('carbon_fields_register_fields', function () {
   $homepage_fields->add_fields([
     Field::make('complex','nta_home_slides','Homepage slider')
       ->setup_labels(['singular_name' => 'Slide', 'plural_name' => 'Slides'])
-      ->set_help_text('Click Add Slide to create a slide. Edit its image, text, and buttons below. Use the trash icon to remove a slide, or drag its header to change the order.')
+      ->set_help_text('Click Add Slide to create a slide. Only the image is required. Leave text and buttons empty for an image without an overlay. Use the trash icon to remove a slide, or drag its header to change the order.')
       ->add_fields([
       Field::make('image','image','Slide image')->set_value_type('id')->set_required(true),
       Field::make('text','eyebrow','Introductory label'),
-      Field::make('text','heading','Main heading')->set_required(true),
+      Field::make('text','heading','Main heading'),
       Field::make('textarea','body','Supporting text'),
       Field::make('text','primary_label','First button label'),
       Field::make('text','primary_url','First button link')->set_help_text('Use a page path such as /about-us/ or a full https:// URL.'),
@@ -286,3 +286,13 @@ add_filter('render_block_core/group', function ($html, $block) {
 }, 10, 2);
 
 require_once get_theme_file_path('inc/downloads.php');
+
+function nta_slide_has_content($slide) {
+  foreach (['eyebrow', 'heading', 'body'] as $key) {
+    if (trim((string) ($slide[$key] ?? '')) !== '') return true;
+  }
+  foreach (['primary', 'secondary'] as $button) {
+    if (trim((string) ($slide[$button . '_label'] ?? '')) !== '' && trim((string) ($slide[$button . '_url'] ?? '')) !== '') return true;
+  }
+  return false;
+}

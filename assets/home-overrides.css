@@ -40,6 +40,8 @@
   background: linear-gradient(90deg, rgba(17, 24, 32, .72), rgba(17, 24, 32, .25));
 }
 
+.hero-slide-image-only::before { content: none; }
+
 .hero-slide-image {
   position: absolute;
   inset: 0;
