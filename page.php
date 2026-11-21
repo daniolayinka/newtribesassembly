@@ -20,31 +20,12 @@ while (have_posts()) :
         'audio' => 'nta_audio',
     ];
     ?>
-    <?php if ($slug === 'meetings') :
-        $live_url = nta_theme_option('nta_live_paused') ? '' : nta_youtube_live_url(nta_theme_option('nta_youtube_live_embed'));
-        ?>
-        <section class="meeting-broadcast" aria-label="Online gathering">
-            <?php if ($live_url) : ?>
-                <div class="meeting-player">
-                    <iframe src="<?php echo esc_url($live_url); ?>" title="New Tribes Assembly YouTube broadcast" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
-                </div>
-                <div class="broadcast-caption wrap"><p>Worship with New Tribes Assembly</p><a href="#sunday-worship">Meeting details</a></div>
-            <?php else : ?>
-                <div class="broadcast-waiting wrap">
-                    <p class="eyebrow">Worship with us</p>
-                    <h1>Join our next gathering.</h1>
-                    <p>Come together for worship, the Word, and prayer.</p>
-                    <ul class="broadcast-schedule"><?php foreach (nta_meetings() as $meeting) : ?><li><?php echo esc_html($meeting['title']); ?><?php if (!empty($meeting['day'])) : ?> · <?php echo esc_html($meeting['day']); ?><?php endif; ?></li><?php endforeach; ?></ul>
-                    <div class="actions"><a class="button" href="#sunday-worship">View meeting details</a><a class="button outline" href="<?php echo esc_url(home_url('/resources/')); ?>">Explore past teaching</a></div>
-                </div>
-            <?php endif; ?>
-        </section>
-    <?php endif; ?>
+    <?php if ($slug === 'meetings') : get_template_part('stream-section'); endif; ?>
     <section class="page-hero<?php echo $slug === 'about-us' ? ' about-hero' : ''; ?>">
         <div class="wrap">
             <?php if ($slug === 'about-us') : ?><div class="about-hero-copy"><?php endif; ?>
             <p class="eyebrow"><?php echo esc_html($slug === 'meetings' ? 'Gathered Life' : ($slug === 'people-groups' ? 'Life Together' : 'New Tribes Assembly')); ?></p>
-            <?php if ($slug === 'meetings' && !$live_url) : ?><h2><?php the_title(); ?></h2><?php else : ?><h1><?php the_title(); ?></h1><?php endif; ?>
+            <?php if ($slug === 'meetings') : ?><h2><?php the_title(); ?></h2><?php else : ?><h1><?php the_title(); ?></h1><?php endif; ?>
             <p class="lead"><?php echo esc_html(nta_page_intro($slug)); ?></p>
             <?php if ($slug === 'about-us') : ?></div>
                 <figure class="about-hero-image"><?php if (has_post_thumbnail()) : ?><?php the_post_thumbnail('large', ['loading' => 'eager']); ?><?php else : ?><img src="<?php echo esc_url(get_theme_file_uri('assets/images/scripture-light.jpg')); ?>" alt="An open Bible in warm morning light" width="1536" height="1024" fetchpriority="high"><?php endif; ?></figure>

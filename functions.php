@@ -31,8 +31,8 @@ add_action('carbon_fields_register_fields', function () {
     Field::make('text','nta_header_cta_url','Header button URL')->set_attribute('type','url')->set_default_value('/meetings/#sunday-worship'),
   ]);
   Container::make('theme_options', 'Meeting Settings')->add_fields([
-    Field::make('textarea', 'nta_youtube_live_embed', 'YouTube live embed code')->set_help_text('Paste the iframe code from YouTube Share → Embed. The player appears first on Meetings. YouTube shows its waiting screen before a scheduled stream and its replay after the stream ends. Clear this field to show the next-gathering message.'),
-    Field::make('checkbox', 'nta_live_paused', 'Show the next-gathering message instead of the player')->set_help_text('Use this between services while keeping the embed code saved.'),
+    Field::make('text', 'nta_youtube_api_key', 'YouTube Data API key')->set_attribute('type', 'password')->set_help_text('Enable YouTube Data API v3 in Google Cloud. Restrict this key to that API and your server IP. Used only on the server to detect published streams. Create broadcasts under Streams → Add Stream.'),
+    Field::make('text', 'nta_youtube_channel', 'YouTube channel')->set_default_value('https://www.youtube.com/@NewtribesAssembly')->set_help_text('Set once: paste the channel URL, @handle, or UC channel ID. Streams with no video override detect this channel’s public live broadcast near their scheduled start.'),
     Field::make('complex', 'nta_meetings', 'Meeting listings')
       ->setup_labels(['singular_name' => 'Meeting', 'plural_name' => 'Meetings'])
       ->set_help_text('Add a meeting, then add its sessions and times. Drag entries to change the display order.')
@@ -296,3 +296,5 @@ function nta_slide_has_content($slide) {
   }
   return false;
 }
+
+require_once get_theme_file_path('inc/streams.php');
